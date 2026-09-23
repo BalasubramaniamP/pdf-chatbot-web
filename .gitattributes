@@ -1,0 +1,3 @@
+# Always use LF for TypeScript/JavaScript
+*.ts text eol=lf
+*.tsx text eol=lf
