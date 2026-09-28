@@ -7,9 +7,17 @@ interface UploadZoneProps {
   onFileSelected: (file: File) => void;
   isUploading: boolean;
   error?: string | null;
+  taxDbEnabled?: boolean;
+  onTaxChat?: () => void;
 }
 
-export default function UploadZone({ onFileSelected, isUploading, error }: UploadZoneProps) {
+export default function UploadZone({
+  onFileSelected,
+  isUploading,
+  error,
+  taxDbEnabled,
+  onTaxChat,
+}: UploadZoneProps) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -80,6 +88,17 @@ export default function UploadZone({ onFileSelected, isUploading, error }: Uploa
           </>
         )}
       </label>
+
+      {onTaxChat && (
+        <button
+          type="button"
+          onClick={onTaxChat}
+          disabled={isUploading || taxDbEnabled === false}
+          className="mt-6 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-paper transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          Chat with Tax database
+        </button>
+      )}
 
       {error && (
         <p className="mt-4 max-w-md text-center text-sm text-rust">{error}</p>

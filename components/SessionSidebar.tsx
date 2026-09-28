@@ -3,6 +3,7 @@
 import { useState } from "react";
 import clsx from "clsx";
 import type { ChatSession, Document } from "@/lib/types";
+import { isTaxDocument } from "@/lib/types";
 
 interface SessionSidebarProps {
   sessions: ChatSession[];
@@ -12,7 +13,9 @@ interface SessionSidebarProps {
   onSessionSelect: (session: ChatSession) => void;
   onNewSession: () => void;
   onNewDocument: () => void;
+  onTaxChat?: () => void;
   isLoading?: boolean;
+  taxDbEnabled?: boolean;
 }
 
 export default function SessionSidebar({
@@ -23,7 +26,9 @@ export default function SessionSidebar({
   onSessionSelect,
   onNewSession,
   onNewDocument,
+  onTaxChat,
   isLoading,
+  taxDbEnabled,
 }: SessionSidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -59,6 +64,15 @@ export default function SessionSidebar({
           </svg>
         </button>
         <div className="flex-1" />
+        {onTaxChat && (
+          <button
+            onClick={onTaxChat}
+            className="mb-2 rounded-lg p-2 text-ink hover:bg-paper transition-colors"
+            title="Chat with Tax database"
+          >
+            <span className="text-base">🗃️</span>
+          </button>
+        )}
         <button
           onClick={onNewSession}
           className="rounded-lg p-2 text-muted hover:bg-paper hover:text-ink transition-colors"
@@ -108,13 +122,15 @@ export default function SessionSidebar({
           </div>
           <div className="rounded-card border border-line bg-paper p-3">
             <p className="truncate text-sm font-medium text-ink" title={currentDocument.file_name}>
-              {currentDocument.file_name}
+              {isTaxDocument(currentDocument) ? "Tax Database (clientdev2205)" : currentDocument.file_name}
             </p>
-            {currentDocument.total_chunks && (
+            {isTaxDocument(currentDocument) ? (
+              <p className="mt-1 text-xs text-muted">Live PostgreSQL · Groq analysis</p>
+            ) : currentDocument.total_chunks ? (
               <p className="mt-1 text-xs text-muted">
                 {currentDocument.total_chunks} chunks indexed
               </p>
-            )}
+            ) : null}
           </div>
         </div>
       )}
@@ -158,9 +174,9 @@ export default function SessionSidebar({
                   {doc && (
                     <p
                       className="mt-1 truncate text-xs text-muted"
-                      title={`Document: ${doc.file_name}`}
+                      title={isTaxDocument(doc) ? "Tax database" : `Document: ${doc.file_name}`}
                     >
-                      📄 {doc.file_name}
+                      {isTaxDocument(doc) ? "🗃️ Tax database" : `📄 ${doc.file_name}`}
                     </p>
                   )}
 
@@ -188,6 +204,15 @@ export default function SessionSidebar({
 
       {/* Footer - New Conversation Button */}
       <div className="border-t border-line p-4 shrink-0">
+        {onTaxChat && (
+          <button
+            onClick={onTaxChat}
+            disabled={taxDbEnabled === false}
+            className="mb-2 w-full rounded-full bg-ink px-3.5 py-2 text-xs font-medium text-paper transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            Chat with Tax database
+          </button>
+        )}
         <button
           onClick={onNewSession}
           className="w-full rounded-full border border-line px-3.5 py-2 text-xs font-medium text-muted transition-colors hover:border-teal/50 hover:text-teal-dark"

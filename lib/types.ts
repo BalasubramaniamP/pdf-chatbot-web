@@ -5,6 +5,16 @@ export interface Document {
   status: "PROCESSING" | "COMPLETED" | "FAILED";
   total_chunks?: number;
   created_at: string;
+  source_type?: "pdf" | "tax_db";
+  object_key?: string | null;
+}
+
+export function isTaxDocument(document?: Document | null): boolean {
+  if (!document) return false;
+  return (
+    document.source_type === "tax_db" ||
+    Boolean(document.object_key?.startsWith("tax-database:"))
+  );
 }
 
 export interface ChatSession {

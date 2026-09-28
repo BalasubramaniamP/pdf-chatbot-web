@@ -8,6 +8,8 @@ export interface Document {
   status: "PROCESSING" | "COMPLETED" | "FAILED";
   total_chunks?: number;
   created_at: string;
+  source_type?: "pdf" | "tax_db";
+  object_key?: string | null;
 }
 
 export interface ChatSession {
@@ -83,6 +85,31 @@ export async function createSession(
     throw new Error(error.detail || "Failed to create session");
   }
 
+  return response.json();
+}
+
+export async function createTaxSession(): Promise<ChatSession> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/chat/tax-sessions`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: "Failed to start tax chat" }));
+    throw new Error(error.detail || "Failed to start tax database chat");
+  }
+
+  return response.json();
+}
+
+export async function getTaxHealth(): Promise<{
+  enabled: boolean;
+  status: string;
+  detail?: string;
+}> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/tax/health`);
+  if (!response.ok) {
+    return { enabled: false, status: "error" };
+  }
   return response.json();
 }
 

@@ -9,9 +9,11 @@ import type { Document, ChatSession, UIMessage, ChatMessage } from "@/lib/types"
 import {
   uploadDocument,
   createSession,
+  createTaxSession,
   listSessions,
   getSessionMessages,
   getDocument,
+  getTaxHealth,
 } from "@/lib/api-client";
 
 export default function Home() {
@@ -26,10 +28,20 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [taxDbEnabled, setTaxDbEnabled] = useState(true);
 
   // Load all sessions on mount and check URL for session
   useEffect(() => {
     loadAllSessions();
+    getTaxHealth()
+      .then((health) => {
+        if (health.enabled === false && health.status === "unconfigured") {
+          setTaxDbEnabled(false);
+          return;
+        }
+        setTaxDbEnabled(true);
+      })
+      .catch(() => setTaxDbEnabled(true));
   }, []);
 
   // Handle URL session parameter
@@ -143,6 +155,25 @@ export default function Home() {
     router.push("/");
   }
 
+  async function handleTaxChat() {
+    setError(null);
+    setIsUploading(true);
+    try {
+      const newSession = await createTaxSession();
+      const taxDoc = await getDocument(newSession.document_id);
+      setCurrentDocument(taxDoc);
+      setDocumentsMap((prev) => new Map(prev).set(taxDoc.id, taxDoc));
+      setCurrentSession(newSession);
+      setMessages([]);
+      router.push(`?session=${newSession.id}`);
+      await loadAllSessions();
+    } catch (err: any) {
+      setError(err.message || "Failed to start tax database chat");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
   function handleNewDocument() {
     // Clear current session but keep showing sidebar with upload option
     setCurrentDocument(null);
@@ -163,7 +194,9 @@ export default function Home() {
         onSessionSelect={handleSessionSelect}
         onNewSession={handleNewSession}
         onNewDocument={handleNewDocument}
+        onTaxChat={handleTaxChat}
         isLoading={isLoadingSessions}
+        taxDbEnabled={taxDbEnabled}
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
@@ -175,6 +208,8 @@ export default function Home() {
                 onFileSelected={handleFileUpload}
                 isUploading={isUploading}
                 error={error}
+                taxDbEnabled={taxDbEnabled}
+                onTaxChat={handleTaxChat}
               />
             </div>
           </div>

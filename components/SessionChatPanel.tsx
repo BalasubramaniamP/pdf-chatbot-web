@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import MessageBubble from "./MessageBubble";
 import type { UIMessage, ChatSession, Document } from "@/lib/types";
+import { isTaxDocument } from "@/lib/types";
 import { askQuestion } from "@/lib/api-client";
 
 interface SessionChatPanelProps {
@@ -11,10 +12,16 @@ interface SessionChatPanelProps {
   initialMessages: UIMessage[];
 }
 
-const SUGGESTIONS = [
+const PDF_SUGGESTIONS = [
   "Summarize this document in a few sentences",
   "What are the key takeaways?",
   "List any important conclusions or findings",
+];
+
+const TAX_SUGGESTIONS = [
+  "How many clients are in the database?",
+  "List the tables related to tax computation",
+  "Show the latest assessment years",
 ];
 
 export default function SessionChatPanel({
@@ -22,6 +29,8 @@ export default function SessionChatPanel({
   document,
   initialMessages,
 }: SessionChatPanelProps) {
+  const taxMode = isTaxDocument(document);
+  const suggestions = taxMode ? TAX_SUGGESTIONS : PDF_SUGGESTIONS;
   const [messages, setMessages] = useState<UIMessage[]>(initialMessages);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
@@ -102,11 +111,13 @@ export default function SessionChatPanel({
               <h2 className="font-serif text-2xl text-ink">Ready when you are.</h2>
               <p className="mt-2 max-w-sm text-sm text-muted">
                 Ask a question about{" "}
-                <span className="font-medium text-ink">{document.file_name}</span>, or try one of
-                these:
+                <span className="font-medium text-ink">
+                  {taxMode ? "the Tax database" : document.file_name}
+                </span>
+                , or try one of these:
               </p>
               <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-center">
-                {SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => ask(s)}
@@ -143,7 +154,9 @@ export default function SessionChatPanel({
               }
             }}
             rows={1}
-            placeholder="Ask a question about this document…"
+            placeholder={
+              taxMode ? "Ask a question about the Tax database…" : "Ask a question about this document…"
+            }
             disabled={busy || document.status !== "COMPLETED"}
             className="flex-1 resize-none bg-transparent px-2 py-2 text-[15px] text-ink placeholder:text-muted focus:outline-none disabled:opacity-50"
           />
